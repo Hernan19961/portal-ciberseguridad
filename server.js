@@ -6,12 +6,12 @@ const axios = require('axios');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Caché inteligente para ahorrar créditos
+// Caché para proteger tus créditos de estudiante
 const cache = { shodan: {}, zoomeye: {}, ips: {} };
 
 app.use(express.static(__dirname));
 
-// RUTA PARA ESCANEO DE IP (Shodan es mejor para esto)
+// ESCANEO DIRECTO DE IP (Shodan)
 app.get('/scan', async (req, res) => {
     const ip = req.query.ip;
     if (cache.ips[ip]) return res.json({ status: "success", data: cache.ips[ip], fromCache: true });
@@ -25,11 +25,10 @@ app.get('/scan', async (req, res) => {
     }
 });
 
-// RUTA DE BÚSQUEDA MULTI-MOTOR
+// BÚSQUEDA POR TÉRMINOS (Multi-Motor)
 app.get('/search', async (req, res) => {
     const { q, engine } = req.query;
 
-    // Verificar Caché
     if (cache[engine] && cache[engine][q]) {
         return res.json({ status: "success", data: cache[engine][q], fromCache: true });
     }
@@ -40,18 +39,13 @@ app.get('/search', async (req, res) => {
             cache.shodan[q] = results;
             res.json({ status: "success", data: results });
         } catch (e) {
-            let msg = e.message;
-            if (msg.includes("membership")) msg = "SHODAN requiere membresía para este término.";
-            res.status(500).json({ status: "error", message: msg });
+            res.status(500).json({ status: "error", message: e.message });
         }
     } else {
-        // LÓGICA ZOOMEYE
         try {
             const response = await axios.get(`https://api.zoomeye.org/host/search?query=${encodeURIComponent(q)}`, {
                 headers: { 'API-KEY': process.env.ZOOMEYE_API_KEY }
             });
-            
-            // Adaptar formato ZoomEye al formato de la App
             const adaptedData = {
                 total: response.data.total,
                 matches: response.data.matches.map(m => ({
@@ -64,15 +58,15 @@ app.get('/search', async (req, res) => {
             cache.zoomeye[q] = adaptedData;
             res.json({ status: "success", data: adaptedData });
         } catch (e) {
-            res.status(500).json({ status: "error", message: "ZOOMEYE: API Key inválida o límite alcanzado." });
+            res.status(500).json({ status: "error", message: "ZOOMEYE: Error de conexión o Key inválida." });
         }
     }
 });
 
 app.listen(port, () => {
     console.log(`\n=========================================`);
-    console.log(`  CYBER-INTEL V5.0 - HERNÁN OLAVE 2026`);
-    console.log(`  Motores: Shodan & ZoomEye Activos`);
+    console.log(`  CYBER-INTEL V5.5 - HERNÁN OLAVE 2026`);
+    console.log(`  Entorno de Práctica: Desafío Latam`);
     console.log(`  URL: http://localhost:${port}`);
     console.log(`=========================================\n`);
 });

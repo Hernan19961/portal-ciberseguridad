@@ -11,19 +11,23 @@
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="text-center mb-3">
-                    <h2 class="cyber-title">CYBER-INTEL V4.0</h2>
-                    <div class="status-bar">MODO: ALERTA ROJA | OPERADOR: H. OLAVE</div>
+                    <h2 class="cyber-title">CYBER-INTEL V5.0</h2>
+                    <div class="status-bar">MULTI-ENGINE | OPERADOR: H. OLAVE</div>
                 </div>
 
                 <div class="card terminal-card p-3 mb-3">
                     <div class="input-group">
-                        <input type="text" id="commandInput" class="form-control input-cyber" placeholder="IP o comando (ej: webcam cl)">
+                        <select id="engineSelect" class="form-select input-cyber" style="max-width: 140px;">
+                            <option value="shodan">SHODAN</option>
+                            <option value="zoomeye">ZOOMEYE</option>
+                        </select>
+                        <input type="text" id="commandInput" class="form-control input-cyber" placeholder="IP o término (ej: webcam)">
                         <button class="btn btn-danger" id="runBtn">EJECUTAR</button>
                     </div>
                 </div>
 
                 <div id="console" class="console-output">
-                    <div class="text-danger">> Sistema listo. Ingrese comando de red...</div>
+                    <div class="text-danger">> Sistema dual listo. Seleccione motor e ingrese comando...</div>
                 </div>
 
                 <div class="footer-credits text-center mt-4">

@@ -17,7 +17,6 @@ body {
     color: #ff3131 !important; 
     border: 1px solid #ff3131 !important; 
     border-radius: 0;
-    font-size: 1.1rem;
 }
 
 .console-output { 
@@ -30,39 +29,34 @@ body {
     box-shadow: inset 0 0 20px #330000;
 }
 
-/* Forzar que el texto de respuesta sea rojo */
 .console-output div, .console-output p, .console-output span {
     color: #ff3131 !important;
 }
 
+/* LA IP EN VERDE BRILLANTE */
 .ip-box { 
-    color: #ffffff !important; 
-    background-color: #1cbe5b;
+    color: #000000 !important; 
+    background-color: #00ff00; 
     padding: 2px 8px;
     font-weight: bold;
-    border: 1px solid #19ac14;
+    border: 1px solid #ffffff;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
 }
 
-/* Estilo para Errores: Solo texto rojo brillante, sin fondo */
 .error-msg { 
     color: #ff3131 !important; 
-    border: 1px dashed #ff3131; /* Un borde punteado sutil para resaltar */
-    background-color: transparent; /* Fondo transparente */
+    border: 1px dashed #ff3131; 
+    background-color: transparent; 
     padding: 15px; 
     margin-top: 10px;
     font-weight: bold;
-    text-transform: uppercase;
 }
-
-
-
 
 .footer-credits {
     font-size: 0.85rem;
     color: #666;
     border-top: 1px solid #220000;
     padding-top: 15px;
-    letter-spacing: 1px;
 }
 
 .status-bar { font-size: 0.75rem; color: #888; text-transform: uppercase; }

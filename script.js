@@ -1,38 +1,65 @@
-document.getElementById('scanBtn').addEventListener('click', async () => {
-    const ip = document.getElementById('ipInput').value;
-    const resultsDiv = document.getElementById('results');
+document.getElementById('execBtn').addEventListener('click', procesar);
+document.getElementById('mainInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') procesar(); });
 
-    if (!ip) {
-        resultsDiv.innerHTML = '<span class="text-danger">> ERROR: IP NO PROPORCIONADA</span>';
-        return;
+async function procesar() {
+    const input = document.getElementById('mainInput').value.trim();
+    const div = document.getElementById('results');
+    if (!input) return;
+
+    div.innerHTML = `<div class="text-white">> Accediendo a la red para: ${input}...</div>`;
+
+    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+
+    if (ipRegex.test(input)) {
+        // Es una IP
+        ejecutar(`/scan?ip=${input}`, 'ip');
+    } else {
+        // Es una búsqueda (convertimos espacios en + para la URL)
+        const query = input.replace(/\s+/g, '+');
+        ejecutar(`/search?q=${query}`, 'search');
     }
+}
 
-    resultsDiv.innerHTML = '<span class="text-warning">> ESTABLECIENDO CONEXIÓN CON SHODAN...</span>';
-
+async function ejecutar(url, tipo) {
+    const div = document.getElementById('results');
     try {
-        const response = await fetch(`/scan?ip=${ip}`);
-        const result = await response.json();
-
-        if (result.status === "success") {
-            const d = result.data;
-            resultsDiv.innerHTML = `
-                <div class="terminal-text">
-                    <p class="text-success mb-1"><strong>[ REPORTE DE INTELIGENCIA ]</strong></p>
-                    <p>🌐 <strong>IP:</strong> ${d.ip_str}</p>
-                    <p>📍 <strong>UBICACIÓN:</strong> ${d.city || 'N/A'}, ${d.country_name || 'N/A'}</p>
-                    <p>🏢 <strong>ORG:</strong> ${d.org || 'N/A'}</p>
-                    <p>📂 <strong>PUERTOS:</strong></p>
-                    <div>
-                        ${d.ports.map(p => `<span class="badge badge-port">${p}</span>`).join('')}
-                    </div>
-                    <hr class="border-secondary">
-                    <p class="text-secondary small">> Escaneo finalizado con éxito.</p>
-                </div>
-            `;
+        const response = await fetch(url);
+        const res = await response.json();
+        
+        if (res.status === "success" && (res.data.ip_str || (res.data.matches && res.data.matches.length > 0))) {
+            tipo === 'ip' ? renderHost(res) : renderLista(res);
         } else {
-            resultsDiv.innerHTML = `<span class="text-danger">> ERROR: ${result.message}</span>`;
+            div.innerHTML = `<div class="text-danger">> No se encontraron resultados. Intenta con un término más general como 'linux' o verifica tus créditos.</div>`;
         }
-    } catch (error) {
-        resultsDiv.innerHTML = '<span class="text-danger">> ERROR CRÍTICO EN EL NODO CENTRAL</span>';
+    } catch (err) {
+        div.innerHTML = `<div class="text-danger">> Error crítico de conexión.</div>`;
     }
-});
+}
+
+function renderHost(res) {
+    const d = res.data;
+    const cache = res.fromCache ? '<span class="badge-cache">CACHE</span>' : '';
+    document.getElementById('results').innerHTML = `
+        <div class="text-info-bright">
+            <p><strong>[ REPORTE DE IP ]</strong> ${cache}</p>
+            <p>IP: ${d.ip_str}</p>
+            <p>ORG: ${d.org || 'N/A'}</p>
+            <p>UBICACIÓN: ${d.city || '?'}, ${d.country_name}</p>
+            <p>PUERTOS: ${d.ports.join(' | ')}</p>
+        </div>`;
+}
+
+function renderLista(res) {
+    const cache = res.fromCache ? '<span class="badge-cache">CACHE</span>' : '';
+    let html = `<p class="text-warning"><strong>[ RESULTADOS: ${res.data.total} ]</strong> ${cache}</p>`;
+    
+    res.data.matches.slice(0, 10).forEach(m => {
+        html += `
+        <div class="device-entry">
+            <span class="text-primary">IP:</span> ${m.ip_str} 
+            <span class="text-primary">| Puerto:</span> ${m.port}
+            <br><span class="text-muted" style="font-size:0.7rem;">${m.isp} - ${m.location.city || ''}</span>
+        </div>`;
+    });
+    document.getElementById('results').innerHTML = html;
+}

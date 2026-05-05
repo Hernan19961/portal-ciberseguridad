@@ -1,40 +1,16 @@
-body {
-    background-color: #0d1117;
-    color: #c9d1d9;
-    font-family: 'Courier New', Courier, monospace;
-}
-
-.card {
-    background-color: #161b22;
-    border: 1px solid #30363d;
-    color: #e6edf3;
-}
-
-.btn-cyber {
-    background-color: #238636;
-    color: white;
-    font-weight: bold;
-    border: none;
-}
-
-.btn-cyber:hover {
-    background-color: #2ea043;
-    color: white;
-}
-
-.results-container {
-    min-height: 200px;
-    border: 1px solid #30363d;
-    max-height: 400px;
+body { background-color: #05070a; color: #00ff41; font-family: 'Consolas', monospace; }
+.card { border-radius: 0; box-shadow: 0 0 15px rgba(0, 123, 255, 0.2); }
+.console-box {
+    background-color: #000;
+    border: 1px solid #222;
+    min-height: 450px;
+    max-height: 600px;
     overflow-y: auto;
 }
-
-.terminal-text {
-    font-size: 0.9rem;
-    line-height: 1.5;
+.device-entry {
+    border-bottom: 1px solid #111;
+    padding: 10px 0;
+    font-size: 0.85rem;
 }
-
-.badge-port {
-    background-color: #1f6feb;
-    margin-right: 5px;
-}
+.text-info-bright { color: #00d4ff; }
+.badge-cache { font-size: 0.6rem; color: #ff00ff; border: 1px solid #ff00ff; padding: 2px 4px; margin-left: 10px; }

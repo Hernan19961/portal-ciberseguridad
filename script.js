@@ -1,65 +1,57 @@
-document.getElementById('execBtn').addEventListener('click', procesar);
-document.getElementById('mainInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') procesar(); });
+const consoleDiv = document.getElementById('console');
+const inputField = document.getElementById('commandInput');
 
-async function procesar() {
-    const input = document.getElementById('mainInput').value.trim();
-    const div = document.getElementById('results');
-    if (!input) return;
+document.getElementById('runBtn').addEventListener('click', iniciarBusqueda);
+inputField.addEventListener('keypress', (e) => { if (e.key === 'Enter') iniciarBusqueda(); });
 
-    div.innerHTML = `<div class="text-white">> Accediendo a la red para: ${input}...</div>`;
+async function iniciarBusqueda() {
+    const rawInput = inputField.value.trim();
+    if (!rawInput) return;
+
+    consoleDiv.innerHTML = `<div class="text-danger">> Iniciando protocolo para: ${rawInput}...</div>`;
 
     const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-
-    if (ipRegex.test(input)) {
-        // Es una IP
-        ejecutar(`/scan?ip=${input}`, 'ip');
-    } else {
-        // Es una búsqueda (convertimos espacios en + para la URL)
-        const query = input.replace(/\s+/g, '+');
-        ejecutar(`/search?q=${query}`, 'search');
-    }
-}
-
-async function ejecutar(url, tipo) {
-    const div = document.getElementById('results');
+    const url = ipRegex.test(rawInput) ? `/scan?ip=${rawInput}` : `/search?q=${encodeURIComponent(rawInput)}`;
+    
     try {
         const response = await fetch(url);
         const res = await response.json();
-        
-        if (res.status === "success" && (res.data.ip_str || (res.data.matches && res.data.matches.length > 0))) {
-            tipo === 'ip' ? renderHost(res) : renderLista(res);
-        } else {
-            div.innerHTML = `<div class="text-danger">> No se encontraron resultados. Intenta con un término más general como 'linux' o verifica tus créditos.</div>`;
-        }
+
+        if (!response.ok) throw new Error(res.message);
+
+        if (ipRegex.test(rawInput)) renderHost(res);
+        else renderLista(res);
+
     } catch (err) {
-        div.innerHTML = `<div class="text-danger">> Error crítico de conexión.</div>`;
+        // Aquí el mensaje ahora saldrá sin el fondo sólido
+        consoleDiv.innerHTML = `
+            <div class="error-msg">
+                > ALERTA DEL SISTEMA <br>
+                > DETALLE: ${err.message.toUpperCase()}
+            </div>`;
     }
 }
 
 function renderHost(res) {
     const d = res.data;
-    const cache = res.fromCache ? '<span class="badge-cache">CACHE</span>' : '';
-    document.getElementById('results').innerHTML = `
-        <div class="text-info-bright">
-            <p><strong>[ REPORTE DE IP ]</strong> ${cache}</p>
-            <p>IP: ${d.ip_str}</p>
-            <p>ORG: ${d.org || 'N/A'}</p>
-            <p>UBICACIÓN: ${d.city || '?'}, ${d.country_name}</p>
-            <p>PUERTOS: ${d.ports.join(' | ')}</p>
+    consoleDiv.innerHTML = `
+        <div>
+            <p><strong>[REPORTE DE HOST DETECTADO]</strong></p>
+            <p>DIRECCIÓN IP: <span class="ip-box">${d.ip_str}</span></p>
+            <p>LOCALIZACIÓN: ${d.country_name || 'N/A'}</p>
+            <p>ISP / ORG: ${d.org || 'N/A'}</p>
+            <p>PUERTOS ABIERTOS: <span style="color: #ffffff !important;">${d.ports.join(' | ')}</span></p>
         </div>`;
 }
 
 function renderLista(res) {
-    const cache = res.fromCache ? '<span class="badge-cache">CACHE</span>' : '';
-    let html = `<p class="text-warning"><strong>[ RESULTADOS: ${res.data.total} ]</strong> ${cache}</p>`;
-    
+    let html = `<p><strong>[COINCIDENCIAS ENCONTRADAS: ${res.data.total}]</strong></p>`;
     res.data.matches.slice(0, 10).forEach(m => {
         html += `
-        <div class="device-entry">
-            <span class="text-primary">IP:</span> ${m.ip_str} 
-            <span class="text-primary">| Puerto:</span> ${m.port}
-            <br><span class="text-muted" style="font-size:0.7rem;">${m.isp} - ${m.location.city || ''}</span>
+        <div style="margin-bottom: 12px; border-bottom: 1px solid #330000; padding-bottom: 5px;">
+            <span class="ip-box">${m.ip_str}</span> | <span>PUERTO: ${m.port}</span>
+            <br><small style="color: #888 !important;">ORG: ${m.isp} | CIUDAD: ${m.location.city || '??'}</small>
         </div>`;
     });
-    document.getElementById('results').innerHTML = html;
+    consoleDiv.innerHTML = html;
 }

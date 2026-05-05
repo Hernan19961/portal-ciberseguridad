@@ -1,16 +1,71 @@
-body { background-color: #05070a; color: #00ff41; font-family: 'Consolas', monospace; }
-.card { border-radius: 0; box-shadow: 0 0 15px rgba(0, 123, 255, 0.2); }
-.console-box {
-    background-color: #000;
-    border: 1px solid #222;
-    min-height: 450px;
-    max-height: 600px;
-    overflow-y: auto;
+body { 
+    background-color: #050000; 
+    color: #ff3131; 
+    font-family: 'Consolas', monospace; 
 }
-.device-entry {
-    border-bottom: 1px solid #111;
-    padding: 10px 0;
+
+.cyber-title { letter-spacing: 4px; text-shadow: 0 0 10px #ff3131; font-weight: bold; }
+
+.terminal-card { 
+    background-color: #1a0000; 
+    border: 1px solid #ff3131; 
+    border-radius: 0;
+}
+
+.input-cyber { 
+    background-color: #000 !important; 
+    color: #ff3131 !important; 
+    border: 1px solid #ff3131 !important; 
+    border-radius: 0;
+    font-size: 1.1rem;
+}
+
+.console-output { 
+    background-color: #000; 
+    border: 1px solid #ff3131; 
+    height: 380px; 
+    overflow-y: auto; 
+    padding: 20px;
+    font-size: 1rem;
+    box-shadow: inset 0 0 20px #330000;
+}
+
+/* Forzar que el texto de respuesta sea rojo */
+.console-output div, .console-output p, .console-output span {
+    color: #ff3131 !important;
+}
+
+.ip-box { 
+    color: #ffffff !important; 
+    background-color: #1cbe5b;
+    padding: 2px 8px;
+    font-weight: bold;
+    border: 1px solid #19ac14;
+}
+
+/* Estilo para Errores: Solo texto rojo brillante, sin fondo */
+.error-msg { 
+    color: #ff3131 !important; 
+    border: 1px dashed #ff3131; /* Un borde punteado sutil para resaltar */
+    background-color: transparent; /* Fondo transparente */
+    padding: 15px; 
+    margin-top: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+
+
+
+.footer-credits {
     font-size: 0.85rem;
+    color: #666;
+    border-top: 1px solid #220000;
+    padding-top: 15px;
+    letter-spacing: 1px;
 }
-.text-info-bright { color: #00d4ff; }
-.badge-cache { font-size: 0.6rem; color: #ff00ff; border: 1px solid #ff00ff; padding: 2px 4px; margin-left: 10px; }
+
+.status-bar { font-size: 0.75rem; color: #888; text-transform: uppercase; }
+
+.console-output::-webkit-scrollbar { width: 6px; }
+.console-output::-webkit-scrollbar-thumb { background: #ff3131; }

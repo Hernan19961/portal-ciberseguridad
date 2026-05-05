@@ -1,72 +1,42 @@
-require('dotenv').config();
 const express = require('express');
-const shodan = require('shodan-client');
 const axios = require('axios');
-
+const cors = require('cors');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3000;
 
-// Caché para proteger tus créditos de estudiante
-const cache = { shodan: {}, zoomeye: {}, ips: {} };
+app.use(cors());
+app.use(express.json());
 
-app.use(express.static(__dirname));
+// REEMPLAZA ESTO CON TU API KEY DE SHODAN
+const SHODAN_API_KEY = 'TU_API_KEY_AQUI';
 
-// ESCANEO DIRECTO DE IP (Shodan)
-app.get('/scan', async (req, res) => {
-    const ip = req.query.ip;
-    if (cache.ips[ip]) return res.json({ status: "success", data: cache.ips[ip], fromCache: true });
+app.get('/api/search', async (req, res) => {
+    const { query, targetPort } = req.query;
     
+    // Construcción de la query inteligente
+    let shodanQuery = query;
+    if (targetPort && targetPort.trim() !== "") {
+        shodanQuery += ` port:${targetPort}`;
+    }
+
     try {
-        const results = await shodan.host(ip, process.env.SHODAN_API_KEY);
-        cache.ips[ip] = results;
-        res.json({ status: "success", data: results });
-    } catch (e) {
-        res.status(500).json({ status: "error", message: "SHODAN: " + e.message });
-    }
-});
-
-// BÚSQUEDA POR TÉRMINOS (Multi-Motor)
-app.get('/search', async (req, res) => {
-    const { q, engine } = req.query;
-
-    if (cache[engine] && cache[engine][q]) {
-        return res.json({ status: "success", data: cache[engine][q], fromCache: true });
-    }
-
-    if (engine === 'shodan') {
-        try {
-            const results = await shodan.search(q, process.env.SHODAN_API_KEY);
-            cache.shodan[q] = results;
-            res.json({ status: "success", data: results });
-        } catch (e) {
-            res.status(500).json({ status: "error", message: e.message });
-        }
-    } else {
-        try {
-            const response = await axios.get(`https://api.zoomeye.org/host/search?query=${encodeURIComponent(q)}`, {
-                headers: { 'API-KEY': process.env.ZOOMEYE_API_KEY }
-            });
-            const adaptedData = {
-                total: response.data.total,
-                matches: response.data.matches.map(m => ({
-                    ip_str: m.ip,
-                    port: m.portinfo.port,
-                    isp: m.asinfo ? m.asinfo.organization : 'N/A',
-                    location: { city: m.geoinfo.city.names.en || '??' }
-                }))
-            };
-            cache.zoomeye[q] = adaptedData;
-            res.json({ status: "success", data: adaptedData });
-        } catch (e) {
-            res.status(500).json({ status: "error", message: "ZOOMEYE: Error de conexión o Key inválida." });
-        }
+        console.log(`[!] Ejecutando búsqueda en Shodan: ${shodanQuery}`);
+        const response = await axios.get(`https://api.shodan.io/shodan/host/search`, {
+            params: {
+                key: SHODAN_API_KEY,
+                query: shodanQuery
+            }
+        });
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error en la API:', error.message);
+        res.status(500).json({ error: 'Error al conectar con Shodan' });
     }
 });
 
 app.listen(port, () => {
-    console.log(`\n=========================================`);
-    console.log(`  CYBER-INTEL V5.5 - HERNÁN OLAVE 2026`);
-    console.log(`  Entorno de Práctica: Desafío Latam`);
-    console.log(`  URL: http://localhost:${port}`);
-    console.log(`=========================================\n`);
+    console.log(`===========================================`);
+    console.log(` CYBER-INTEL: SCANNER CHILE INICIADO`);
+    console.log(` URL: http://localhost:${port}`);
+    console.log(`===========================================`);
 });

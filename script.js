@@ -1,68 +1,52 @@
-const consoleDiv = document.getElementById('console');
-const inputField = document.getElementById('commandInput');
-const engineSelect = document.getElementById('engineSelect');
+async function ejecutarBusqueda() {
+    const query = document.getElementById('searchQuery').value || "webcam cl";
+    const port = document.getElementById('targetPort').value;
+    const output = document.getElementById('consoleOutput');
 
-document.getElementById('runBtn').addEventListener('click', iniciarBusqueda);
-inputField.addEventListener('keypress', (e) => { if (e.key === 'Enter') iniciarBusqueda(); });
-
-async function iniciarBusqueda() {
-    const rawInput = inputField.value.trim();
-    const engine = engineSelect.value;
-    if (!rawInput) return;
-
-    consoleDiv.innerHTML = `<div class="text-danger">> Buscando en ${engine.toUpperCase()}: ${rawInput}...</div>`;
-
-    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-    const url = ipRegex.test(rawInput) 
-        ? `/scan?ip=${rawInput}` 
-        : `/search?q=${encodeURIComponent(rawInput)}&engine=${engine}`;
+    output.innerHTML = `<p class="text-warning">[!] Iniciando protocolo de escaneo para: ${query}</p>`;
     
+    if (!port || port.trim() === "") {
+        output.innerHTML += `<p style="color: #00ccff;">[i] Puerto no definido. Shodan realizará un barrido en puertos de video comunes.</p>`;
+    }
+
     try {
-        const response = await fetch(url);
-        const res = await response.json();
-        if (!response.ok) throw new Error(res.message);
+        // Llamada a tu servidor local Node.js
+        const response = await fetch(`http://localhost:3000/api/search?query=${query}&targetPort=${port}`);
+        const data = await response.json();
 
-        if (ipRegex.test(rawInput)) renderHost(res);
-        else renderLista(res);
-
-    } catch (err) {
-        consoleDiv.innerHTML = `<div class="error-msg">> ERROR: ${err.message.toUpperCase()}</div>`;
+        if (data.matches && data.matches.length > 0) {
+            output.innerHTML += `<p class="text-success">[+] Se encontraron ${data.total} dispositivos en Chile.</p>`;
+            
+            data.matches.forEach(match => {
+                renderResult(
+                    output, 
+                    match.ip_str, 
+                    match.port, 
+                    match.location.city || "Chile", 
+                    match.org, 
+                    match.product || "N/A"
+                );
+            });
+        } else {
+            output.innerHTML += `<p class="text-danger">[x] No se encontraron resultados para esta búsqueda.</p>`;
+        }
+    } catch (error) {
+        output.innerHTML += `<p class="text-danger">[x] ERROR: No se pudo conectar con server.js. Asegúrate de ejecutarlo con 'node server.js'.</p>`;
     }
 }
 
-function renderHost(res) {
-    const d = res.data;
-    consoleDiv.innerHTML = `
-        <div>
-            <p><strong>[REPORTE DE HOST DETECTADO]</strong></p>
-            <p>DIRECCIÓN IP: <span class="ip-box">${d.ip_str}</span></p>
-            <p>LOCALIZACIÓN: ${d.country_name || 'N/A'}</p>
-            <p>ISP / ORG: ${d.org || 'N/A'}</p>
-            <p>PUERTOS: <span style="color: #00ff00 !important;">${d.ports.join(' | ')}</span></p>
-        </div>`;
+function renderResult(container, ip, port, city, org, system) {
+    container.innerHTML += `
+        <div class="result-item">
+            <p class="mb-1 text-white"><strong>OBJETIVO: ${ip}:${port}</strong></p>
+            <div class="small">
+                <span class="text-danger">CIUDAD:</span> ${city} <br>
+                <span class="text-danger">ISP:</span> ${org} <br>
+                <span class="text-danger">SOFTWARE:</span> ${system} <br>
+                <span style="color: #00ff00;" class="fw-bold">[ STATUS: ONLINE ]</span>
+            </div>
+        </div>
+    `;
+    const terminal = document.querySelector('.terminal-window');
+    terminal.scrollTop = terminal.scrollHeight;
 }
-
-function renderLista(res) {
-    let html = `<p><strong>[HALLAZGOS: ${res.data.total}]</strong></p>`;
-    res.data.matches.slice(0, 20).forEach(m => {
-        // Detección de Android ADB (Ghost Framework Target)
-        const isADB = (m.port == 5555 || m.port == 5554);
-        const ghostTag = isADB ? `<span class="tag-ghost">[TARGET GHOST/ADB]</span>` : '';
-        const copyBtn = isADB ? `<button onclick="copyADB('${m.ip_str}')" class="btn btn-sm btn-outline-light" style="font-size: 9px; margin-left: 10px;">COPIAR ADB</button>` : '';
-
-        html += `
-        <div style="margin-bottom: 15px; border-bottom: 1px solid #220000; padding-bottom: 8px;">
-            <span class="ip-box">${m.ip_str}</span> | <span>PORT: ${m.port}</span> ${ghostTag}
-            <br><small style="color: #666 !important;">ORG: ${m.isp} | CIUDAD: ${m.location.city || '??'}</small>
-            ${copyBtn}
-        </div>`;
-    });
-    consoleDiv.innerHTML = html;
-}
-
-function copyADB(ip) {
-    const cmd = `adb connect ${ip}:5555`;
-    navigator.clipboard.writeText(cmd).then(() => {
-        alert("Comando de acceso listo: " + cmd);
-    });
-}   

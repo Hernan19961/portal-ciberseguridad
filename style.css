@@ -1,0 +1,40 @@
+body {
+    background-color: #0d1117;
+    color: #c9d1d9;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.card {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    color: #e6edf3;
+}
+
+.btn-cyber {
+    background-color: #238636;
+    color: white;
+    font-weight: bold;
+    border: none;
+}
+
+.btn-cyber:hover {
+    background-color: #2ea043;
+    color: white;
+}
+
+.results-container {
+    min-height: 200px;
+    border: 1px solid #30363d;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.terminal-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.badge-port {
+    background-color: #1f6feb;
+    margin-right: 5px;
+}

@@ -1,52 +1,46 @@
 async function ejecutarBusqueda() {
-    const query = document.getElementById('searchQuery').value || "webcam cl";
-    const port = document.getElementById('targetPort').value;
+    const query = document.getElementById('searchQuery').value;
+    const engine = document.getElementById('engineSelect').value;
     const output = document.getElementById('consoleOutput');
 
-    output.innerHTML = `<p class="text-warning">[!] Iniciando protocolo de escaneo para: ${query}</p>`;
+    output.innerHTML = `<p class="text-warning">[!] Conectando con ${engine.toUpperCase()}...</p>`;
     
-    if (!port || port.trim() === "") {
-        output.innerHTML += `<p style="color: #00ccff;">[i] Puerto no definido. Shodan realizará un barrido en puertos de video comunes.</p>`;
-    }
-
     try {
-        // Llamada a tu servidor local Node.js
-        const response = await fetch(`http://localhost:3000/api/search?query=${query}&targetPort=${port}`);
+        const response = await fetch(`/api/search?query=${encodeURIComponent(query)}&engine=${engine}`);
         const data = await response.json();
 
+        if (!response.ok) {
+            output.innerHTML = `<p class="text-danger">[x] ERROR: ${data.error}</p>`;
+            return;
+        }
+
+        const source = data.source === 'cache' ? '[CACHÉ]' : '[API]';
+        output.innerHTML = `<p class="text-success">[+] Resultados: ${data.total || 0} ${source}</p>`;
+        
         if (data.matches && data.matches.length > 0) {
-            output.innerHTML += `<p class="text-success">[+] Se encontraron ${data.total} dispositivos en Chile.</p>`;
-            
-            data.matches.forEach(match => {
-                renderResult(
-                    output, 
-                    match.ip_str, 
-                    match.port, 
-                    match.location.city || "Chile", 
-                    match.org, 
-                    match.product || "N/A"
-                );
+            data.matches.forEach(m => {
+                const ip = m.ip_str || m.ip;
+                const port = m.port.port || m.port;
+                const city = m.location?.city || m.geoinfo?.city?.names?.en || 'Chile';
+                renderResult(output, ip, port, city, m.org || m.asn, m.product || m.protocol);
             });
         } else {
-            output.innerHTML += `<p class="text-danger">[x] No se encontraron resultados para esta búsqueda.</p>`;
+            output.innerHTML += `<p class="text-secondary">[i] No hay servicios abiertos visibles en esta IP.</p>`;
         }
     } catch (error) {
-        output.innerHTML += `<p class="text-danger">[x] ERROR: No se pudo conectar con server.js. Asegúrate de ejecutarlo con 'node server.js'.</p>`;
+        output.innerHTML = `<p class="text-danger">[x] Error de red. ¿Corriste 'node server.js'?</p>`;
     }
 }
 
 function renderResult(container, ip, port, city, org, system) {
     container.innerHTML += `
         <div class="result-item">
-            <p class="mb-1 text-white"><strong>OBJETIVO: ${ip}:${port}</strong></p>
+            <p class="mb-1 text-white"><strong>IP: ${ip}:${port}</strong></p>
             <div class="small">
-                <span class="text-danger">CIUDAD:</span> ${city} <br>
-                <span class="text-danger">ISP:</span> ${org} <br>
-                <span class="text-danger">SOFTWARE:</span> ${system} <br>
-                <span style="color: #00ff00;" class="fw-bold">[ STATUS: ONLINE ]</span>
+                <span class="text-danger">CIUDAD:</span> ${city} | <span class="text-danger">ISP:</span> ${org}<br>
+                <span class="text-danger">DETECCIÓN:</span> ${system}
             </div>
-        </div>
-    `;
-    const terminal = document.querySelector('.terminal-window');
-    terminal.scrollTop = terminal.scrollHeight;
+        </div>`;
+    const term = document.querySelector('.terminal-window');
+    term.scrollTop = term.scrollHeight;
 }
